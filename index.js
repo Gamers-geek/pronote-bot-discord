@@ -3,7 +3,7 @@ const fs = require("fs");
 const moment = require("moment");
 moment.locale("fr");
 
-const pronote = require("pronote-api");
+const pronote = require("@dorian-eydoux/pronote-api");
 
 const Discord = require("discord.js");
 const client = new Discord.Client({
