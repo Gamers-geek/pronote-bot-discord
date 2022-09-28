@@ -1,6 +1,8 @@
 require("dotenv").config();
 const fs = require("fs");
 const moment = require("moment");
+const express = require('express');
+const port = process.env.PORT || 3000
 moment.locale("fr");
 
 const pronote = require("@dorian-eydoux/pronote-api");
@@ -9,6 +11,14 @@ const Discord = require("discord.js");
 const client = new Discord.Client({
     intents: [Discord.Intents.FLAGS.GUILDS]
 });
+
+const app = express()
+
+app.get('/', function(req, res) {
+    res.send("Pronote Bot is working !")
+})
+
+app.listen(port)
 
 let cache = null;
 

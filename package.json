@@ -10,7 +10,8 @@
     "discord.js": "^13.2.0",
     "dotenv": "^8.2.0",
     "moment": "^2.29.1",
-    "@dorian-eydoux/pronote-api": "^2.3.4"
+    "@dorian-eydoux/pronote-api": "^2.3.4",
+    "express": "^4.18.1"
   },
   "devDependencies": {
     "eslint": "^7.10.0"
