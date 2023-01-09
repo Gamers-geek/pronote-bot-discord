@@ -1,26 +1,14 @@
 require("dotenv").config();
-//const fs = require("fs");
+const fs = require("fs");
 const moment = require("moment");
-const express = require("express");
-const port = process.env.PORT || 3000;
 moment.locale("fr");
-const AWS = require("aws-sdk");
-const s3 = new AWS.S3();
 
-const pronote = require("@dorian-eydoux/pronote-api");
+const pronote = require("pronote-api");
 
 const Discord = require("discord.js");
 const client = new Discord.Client({
 	intents: [Discord.Intents.FLAGS.GUILDS],
 });
-
-const app = express();
-
-app.get("/", function (req, res) {
-	res.send("Pronote Bot is working !");
-});
-
-app.listen(port);
 
 let cache = null;
 
@@ -28,15 +16,9 @@ let cache = null;
  * Écrit l'objet dans le cache et met à jour la variable
  * @param {object} newCache Le nouvel objet
  */
-const writeCache = async (newCache) => {
+const writeCache = (newCache) => {
 	cache = newCache;
-	await s3
-		.putObject({
-			Body: JSON.stringify(newCache),
-			Bucket: "cyclic-glamorous-button-lamb-eu-west-3",
-			Key: "cache.json",
-		})
-		.promise();
+	fs.writeFileSync("cache.json", JSON.stringify(newCache, null, 4), "utf-8");
 };
 
 /**
@@ -51,24 +33,17 @@ const resetCache = () =>
 		lessonsAway: [],
 	});
 
-const main = async () => {
-	// Si le fichier cache n'existe pas, on le créé
+// Si le fichier cache n'existe pas, on le créé
+if (!fs.existsSync("cache.json")) {
+	resetCache();
+} else {
+	// S'il existe, on essaie de le parser et si ça échoue on le reset pour éviter les erreurs
 	try {
-		cache = await s3
-			.getObject({
-				Bucket: "cyclic-glamorous-button-lamb-eu-west-3",
-				Key: "cache.json",
-			})
-			.promise();
-		cache = JSON.parse(cache);
-	} catch (error) {
-		if (error.code == "NoSuchKey") {
-			resetCache();
-		} else {
-			resetCache();
-		}
+		cache = JSON.parse(fs.readFileSync("cache.json", "utf-8"));
+	} catch {
+		resetCache();
 	}
-};
+}
 
 /**
  * Synchronise le cache avec Pronote et se charge d'appeler les fonctions qui envoient les notifications
@@ -179,11 +154,9 @@ const sendDiscordNotificationMark = (subject, mark) => {
 	const embed = new Discord.MessageEmbed()
 		.setTitle(subject.name.toUpperCase())
 		.setDescription(description)
-		.setFooter({
-			text: `Date de l'évaluation : ${moment(mark.date).format(
-				"dddd Do MMMM"
-			)}`,
-		})
+		.setFooter(
+			`Date de l'évaluation : ${moment(mark.date).format("dddd Do MMMM")}`
+		)
 		.setURL(process.env.PRONOTE_URL)
 		.setColor("#70C7A4");
 
@@ -205,22 +178,20 @@ const sendDiscordNotificationHomework = (homework) => {
 	const embed = new Discord.MessageEmbed()
 		.setTitle(homework.subject.toUpperCase())
 		.setDescription(homework.description)
-		.setFooter({
-			text: `Devoir pour le ${moment(homework.for).format("dddd Do MMMM")}`,
-		})
+		.setFooter(`Devoir pour le ${moment(homework.for).format("dddd Do MMMM")}`)
 		.setURL(process.env.PRONOTE_URL)
 		.setColor("#70C7A4");
 
 	if (homework.files.length >= 1) {
-		embed.addFields({
-			name: "Pièces jointes",
-			value: homework.files
+		embed.addField(
+			"Pièces jointes",
+			homework.files
 				.map((file) => {
 					return `[${file.name}](${file.url})`;
 				})
 				.join("\n"),
-			inline: false,
-		});
+			false
+		);
 	}
 
 	client.channels.cache
@@ -245,7 +216,7 @@ const sendDiscordNotificationAway = (awayNotif) => {
 				"dddd Do MMMM"
 			)}`
 		)
-		.setFooter({ text: `Cours annulé de ${awayNotif.subject}` })
+		.setFooter(`Cours annulé de ${awayNotif.subject}`)
 		.setURL(process.env.PRONOTE_URL)
 		.setColor("#70C7A4");
 
@@ -273,6 +244,5 @@ client.on("ready", () => {
 	}, 10 * 60 * 1000);
 });
 
-main();
 // Connexion à Discord
 client.login(process.env.TOKEN);

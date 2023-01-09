@@ -7,6 +7,7 @@
   "author": "Androz2091 <androz2091@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@cyclic.sh/s3fs": "^1.2.4",
     "@dorian-eydoux/pronote-api": "^2.3.4",
     "aws-sdk": "^2.1233.0",
     "discord.js": "^13.2.0",
